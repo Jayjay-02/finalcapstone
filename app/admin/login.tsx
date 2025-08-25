@@ -1,22 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
 
 export default function AdminLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Autofill admin values
+  const [email, setEmail] = useState('admin');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState("");
+
+  // Optionally, try auto-login if values match
+  useEffect(() => {
+    if (email === 'admin' && password === 'admin123') {
+      // Optionally, perform auto-login here
+    }
+    // eslint-disable-next-line
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const adminAccount = localStorage.getItem("adminAccount");
-    if (!adminAccount) {
-      setError("No admin account found. Please sign up.");
-      return;
-    }
-    const { email: storedEmail, password: storedPassword } = JSON.parse(adminAccount);
-    if (email === storedEmail && password === storedPassword) {
+    if (email === 'admin' && password === 'admin123') {
       setError("");
       router.push("/admin/dashboard");
     } else {
@@ -35,11 +38,11 @@ export default function AdminLogin() {
             <h2 className="fw-bold text-warning mb-3" style={{fontSize: 27}}>Admin Login</h2>
             <form onSubmit={handleSubmit} className="mb-2">
               <div className="form-floating mb-3 text-start">
-                <input type="email" className="form-control" id="adminEmail" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" />
+                <input type="text" className="form-control" id="adminEmail" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" autoComplete="username" />
                 <label htmlFor="adminEmail">Email</label>
               </div>
               <div className="form-floating mb-3 text-start">
-                <input type="password" className="form-control" id="adminPassword" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" />
+                <input type="password" className="form-control" id="adminPassword" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
                 <label htmlFor="adminPassword">Password</label>
               </div>
               {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
