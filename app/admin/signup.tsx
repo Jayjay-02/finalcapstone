@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
 
 export default function AdminSignup() {
   const router = useRouter();
@@ -14,41 +14,116 @@ export default function AdminSignup() {
       setError("Both fields are required.");
       return;
     }
-    // Store in localStorage
+
     const adminAccount = { email, password };
     localStorage.setItem("adminAccount", JSON.stringify(adminAccount));
+
     setError("");
     alert("Signup successful! You can now log in.");
     router.push("/admin/login");
   }
 
   return (
-    <div className="container-fluid px-0" style={{minHeight: "100vh", background: "linear-gradient(110deg, #f1f9ff 0%, #f9fafe 100%)"}}>
-      <div className="row justify-content-center align-items-center" style={{minHeight: '100vh'}}>
-        <div className="col-11 col-md-8 col-lg-5 col-xl-4 px-0">
-          <div className="bg-white rounded-4 shadow p-5 mb-4 text-center">
-            <div className="mb-2">
-              <span style={{fontSize: 40, display: 'inline-block'}} role="img" aria-label="admin">⚙️</span>
+    <div className="container-fluid px-0" style={{ minHeight: "100vh" }}>
+      <div className="row g-0" style={{ minHeight: "100vh" }}>
+        
+        {/* Left Section */}
+        <div className="col-lg-6 d-none d-lg-block position-relative" style={{ background: "#fff" }}>
+          <div 
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "50%",
+              background: "#ddd",
+              clipPath: "polygon(0 0, 100% 0, 0 100%)"
+            }}
+          >
+            <div 
+              style={{
+                position: "absolute",
+                top: "20px",
+                left: "20px",
+                width: "80px",
+                height: "80px",
+                background: "#f5f5f5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold"
+              }}
+            >
+              Logo
             </div>
-            <h2 className="fw-bold text-warning mb-3" style={{fontSize: 27}}>Admin Signup</h2>
-            <form onSubmit={handleSubmit} className="mb-2">
-              <div className="form-floating mb-3 text-start">
-                <input type="email" className="form-control" id="signupAdminEmail" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" />
-                <label htmlFor="signupAdminEmail">Email</label>
+          </div>
+          <div 
+            className="h-100 w-100 d-flex justify-content-center align-items-center"
+            style={{ fontSize: "1.2rem", color: "#333" }}
+          >
+            Image/Logo
+          </div>
+        </div>
+
+        {/* Right Section */}
+        <div className="col-lg-6 d-flex align-items-center justify-content-center" style={{ background: "#e5e5e5" }}>
+          <div style={{ width: "360px", maxWidth: "90%" }}>
+            <h3 className="fw-bold mb-1">Create Admin Account</h3>
+            <p className="text-muted mb-4" style={{ fontSize: "0.9rem" }}>Signup to manage PaperTrail</p>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="input-group mb-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-envelope"></i>
+                </span>
+                <input 
+                  type="email" 
+                  className="form-control border-start-0" 
+                  placeholder="Your Email Id"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
               </div>
-              <div className="form-floating mb-3 text-start">
-                <input type="password" className="form-control" id="signupAdminPassword" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" />
-                <label htmlFor="signupAdminPassword">Password</label>
+
+              <div className="input-group mb-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-lock"></i>
+                </span>
+                <input 
+                  type="password" 
+                  className="form-control border-start-0" 
+                  placeholder="Create Password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
               </div>
-              {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
-              <button type="submit" className="btn btn-warning btn-lg w-100 rounded-pill fw-semibold shadow-sm text-white" style={{fontSize: 17}}>Signup</button>
+
+              {error && <div className="alert alert-danger py-2">{error}</div>}
+
+              <button 
+                type="submit"
+                className="btn btn-dark w-100 py-2 fw-semibold"
+                style={{ borderRadius: "0.3rem" }}
+              >
+                Signup
+              </button>
             </form>
-            <div className="text-end">
-              <span className="me-1 text-muted">Already have an account?</span>
-              <a className="fw-semibold text-warning text-decoration-none" href="#" onClick={e => {e.preventDefault(); router.push('/admin/login')}}>Login here</a>
+
+            <div className="d-flex justify-content-end mt-3">
+              <span className="text-muted me-1">Already have an account?</span>
+              <a 
+                href="#" 
+                className="fw-semibold text-dark text-decoration-none"
+                onClick={e => { e.preventDefault(); router.push('/admin/login'); }}
+              >
+                Login here
+              </a>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

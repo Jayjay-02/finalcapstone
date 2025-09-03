@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from "react";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
 
 export default function AdminLogin() {
   const router = useRouter();
-  // Autofill admin values
-  const [email, setEmail] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  // Optionally, try auto-login if values match
-  useEffect(() => {
-    if (email === 'admin' && password === 'admin123') {
-      // Optionally, perform auto-login here
-    }
-    // eslint-disable-next-line
-  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (email === 'admin' && password === 'admin123') {
+    const storedData = localStorage.getItem("adminAccount");
+    if (!storedData) {
+      setError("No account found. Please signup first.");
+      return;
+    }
+    const admin = JSON.parse(storedData);
+    if (admin.email === email && admin.password === password) {
       setError("");
+      alert("Login successful!");
       router.push("/admin/dashboard");
     } else {
       setError("Invalid email or password.");
@@ -28,32 +26,112 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="container-fluid px-0" style={{minHeight: "100vh", background: "linear-gradient(110deg, #f1f9ff 0%, #f9fafe 100%)"}}>
-      <div className="row justify-content-center align-items-center" style={{minHeight: '100vh'}}>
-        <div className="col-11 col-md-8 col-lg-5 col-xl-4 px-0">
-          <div className="bg-white rounded-4 shadow p-5 mb-4 text-center">
-            <div className="mb-2">
-              <span style={{fontSize: 40, display: 'inline-block'}} role="img" aria-label="admin">⚙️</span>
+    <div className="container-fluid px-0" style={{ minHeight: "100vh" }}>
+      <div className="row g-0" style={{ minHeight: "100vh" }}>
+        
+        {/* LEFT SIDE */}
+        <div className="col-12 col-lg-6 d-flex flex-column justify-content-center align-items-center position-relative bg-light">
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "50%",
+              backgroundColor: "#e5e5e5",
+              clipPath: "polygon(0 0, 100% 0, 0 100%)",
+              borderBottom: "5px solid black",
+            }}
+          />
+          <div className="text-center mt-5">
+            <div
+              style={{
+                width: 100,
+                height: 100,
+                backgroundColor: "#fff",
+                border: "2px solid #ddd",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+                marginBottom: "20px",
+              }}
+            >
+              Logo
             </div>
-            <h2 className="fw-bold text-warning mb-3" style={{fontSize: 27}}>Admin Login</h2>
-            <form onSubmit={handleSubmit} className="mb-2">
-              <div className="form-floating mb-3 text-start">
-                <input type="text" className="form-control" id="adminEmail" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" autoComplete="username" />
-                <label htmlFor="adminEmail">Email</label>
-              </div>
-              <div className="form-floating mb-3 text-start">
-                <input type="password" className="form-control" id="adminPassword" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
-                <label htmlFor="adminPassword">Password</label>
-              </div>
-              {error && <div className="alert alert-danger py-2" role="alert">{error}</div>}
-              <button type="submit" className="btn btn-warning btn-lg w-100 rounded-pill fw-semibold shadow-sm text-white" style={{fontSize: 17}}>Login</button>
-            </form>
-            <div className="text-end">
-              <span className="me-1 text-muted">No account?</span>
-              <a className="fw-semibold text-warning text-decoration-none" href="#" onClick={e => {e.preventDefault(); router.push('/admin/signup')}}>Signup here</a>
-            </div>
+            <h5 className="fw-semibold text-muted">Image/Logo</h5>
+
+
+            
           </div>
         </div>
+
+        {/* RIGHT SIDE */}
+        <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center bg-light">
+          <div className="bg-white rounded-4 shadow p-5" style={{ width: "100%", maxWidth: 420 }}>
+            <h3 className="fw-bold mb-1">Welcome to PaperTrail</h3>
+            <p className="text-muted mb-4">A Thesis Management System</p>
+
+            <form onSubmit={handleSubmit}>
+              <div className="form-floating mb-3">
+                <input
+                  type="email"
+                  className="form-control"
+                  id="adminEmail"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <label htmlFor="adminEmail">Email</label>
+              </div>
+              <div className="form-floating mb-3">
+                <input
+                  type="password"
+                  className="form-control"
+                  id="adminPassword"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <label htmlFor="adminPassword">Password</label>
+              </div>
+              {error && <div className="alert alert-danger py-2">{error}</div>}
+
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <a
+                  href="#"
+                  className="text-decoration-none small text-muted"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Forgot Password ?
+                </a>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-dark w-100 py-2 fw-semibold rounded-3 mb-3"
+              >
+                Login
+              </button>
+
+              {/* REGISTER / SIGNUP */}
+              <div className="text-center">
+                <span className="me-1 text-muted">No account?</span>
+                <a
+                  className="fw-semibold text-decoration-none text-dark"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push("/admin/signup");
+                  }}
+                >
+                  Register here
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+
       </div>
     </div>
   );

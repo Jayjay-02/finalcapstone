@@ -9,44 +9,103 @@ export default function Home() {
       className="container-fluid px-0"
       style={{
         minHeight: "100vh",
-        backgroundImage: "url('/assets/images/c7d42c63-b68a-4e37-ba82-afe43fbae873.jpg')",
+        backgroundImage:
+          "url('/assets/images/c7d42c63-b68a-4e37-ba82-afe43fbae873.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
       }}
     >
-      <div className="row w-100 justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="col-11 col-md-8 col-lg-7 col-xl-6 px-0">
-          <div className="bg-white shadow rounded-5 border-0 px-4 py-5 text-center position-relative mb-5" style={{background: 'rgba(255,255,255,0.94)'}}>
-            <div className="mb-2">
-              <span className="d-inline-block" style={{ fontSize: 64 }} role="img" aria-label="books">📚</span>
+      <div
+        className="row justify-content-center align-items-center w-100"
+        style={{ minHeight: "100vh" }}
+      >
+        <div className="col-11 col-md-8 col-lg-6 col-xl-5 px-0">
+          <div className="bg-dark bg-opacity-75 rounded-4 shadow p-5 mb-4">
+            <div className="mb-3">
+              <span style={{ fontSize: 72 }} role="img" aria-label="books">
+                📚
+              </span>
             </div>
-            <div className="fw-bolder mb-2" style={{ fontSize: 42, color: '#2460dc', letterSpacing: -2, lineHeight: 1.05 }}>
+
+            {/* Main Title */}
+            <h1
+              className="fw-bolder mb-3"
+              style={{
+                fontSize: 64,
+                letterSpacing: -1,
+                lineHeight: 1.1,
+                textShadow: "3px 4px 8px rgba(0, 0, 0, 0.6)",
+                color: "#fff",
+              }}
+            >
               PaperTrail
-            </div>
-            <h2 className="text-primary fw-semibold mb-1" style={{ fontSize: 22, lineHeight: 1.2 }}>
+            </h1>
+
+            <h2
+              className="fw-semibold mb-3"
+              style={{
+                fontSize: 24,
+                lineHeight: 1.3,
+                textShadow: "2px 2px 6px rgba(0,0,0,0.5)",
+                color: "#ddd",
+              }}
+            >
               A Thesis Management System for Environmental Science Department
             </h2>
-            <div className="fw-normal text-secondary mb-4 fs-6">Track, manage &amp; collaborate on documents with ease!</div>
+
+            <p
+              className="fw-normal mb-4 fs-6"
+              style={{
+                textShadow: "1px 1px 4px rgba(0,0,0,0.5)",
+                color: "#ccc",
+              }}
+            >
+              Track, manage &amp; collaborate on documents with ease!
+            </p>
+
+            {/* Unified Minimalist Buttons */}
             <div className="d-flex flex-wrap justify-content-center gap-2 my-4">
-              <button className="btn btn-success btn-sm rounded-pill fw-semibold shadow-sm px-3" onClick={() => router.push('/panel/login')}>
-                <span role="img" aria-label="dashboard">📋</span> Panel
+              <button
+                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                onClick={() => router.push("/panel/login")}
+              >
+                📋 Panel
               </button>
-              <button className="btn btn-warning btn-sm rounded-pill fw-semibold shadow-sm px-3 text-white" style={{ border: 0 }} onClick={() => router.push('/admin/login')}>
-                <span role="img" aria-label="admin">⚙️</span> Admin
+              <button
+                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                onClick={() => router.push("/admin/login")}
+              >
+                ⚙️ Admin
               </button>
-              <button className="btn btn-info btn-sm rounded-pill fw-semibold shadow-sm px-3 text-white" style={{ border: 0 }} onClick={() => router.push('/student/login')}>
-                <span role="img" aria-label="student">🎓</span> Student
+              <button
+                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                onClick={() => router.push("/student/login")}
+              >
+                🎓 Student
               </button>
-              <button className="btn btn-secondary btn-sm rounded-pill fw-semibold shadow-sm px-3" onClick={() => router.push('/instructor/login')}>
-                <span role="img" aria-label="instructor">👨‍🏫</span> Instructor
+              <button
+                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                onClick={() => router.push("/instructor/login")}
+              >
+                👨‍🏫 Adviser
               </button>
             </div>
-            <div className="pt-2 small text-muted">
-              <span className="fw-bold text-primary">Papertrail</span> &copy; {new Date().getFullYear()} &middot; Documentation made easy.
+
+            {/* Footer */}
+            <div
+              className="pt-2 small"
+              style={{
+                textShadow: "1px 1px 4px rgba(0,0,0,0.6)",
+                color: "#bbb",
+              }}
+            >
+              <span className="fw-bold">Papertrail</span> &copy;{" "}
+              {new Date().getFullYear()} · Documentation made easy.
             </div>
           </div>
         </div>
