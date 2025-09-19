@@ -2,6 +2,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 
+// ✅ Import your logo image here
+import heroImage from "../../assets/images/logo.jpg";
+
 interface Student {
   email: string;
   password: string;
@@ -162,14 +165,19 @@ export default function AdminDashboard() {
           {/* Hero Section */}
           <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "40vh", background: "#e5e5e5" }}>
             <div className="text-center">
-              <div className="d-inline-block mb-4" style={{ width: 120, height: 120, background: "#ccc", borderRadius: "50%" }}></div>
+              {/* ✅ Display logo.jpg */}
+              <img 
+                src={heroImage} 
+                alt="logo" 
+                className="mb-4"
+                style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover" }}
+              />
               <h2 className="fw-bold mb-0">PaperTrail: Thesis Management</h2>
               <p className="text-muted">Admin Dashboard</p>
             </div>
           </div>
 
           <div className="container my-5">
-
             {/* Cards Section */}
             <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
               {[
