@@ -1,42 +1,103 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useEffect, useState } from "react";
 
+interface Student {
+  name: string;
+  email: string;
+  groupId?: number;
+}
+
+interface Group {
+  id: number;
+  name: string;
+  members: string[]; // student emails
+}
+
 export default function AdminCreateGroup() {
   const [groupName, setGroupName] = useState("");
+  const [selectedMember, setSelectedMember] = useState("");
   const [members, setMembers] = useState<string[]>([]);
-  const [groups, setGroups] = useState<{ name: string; members: string[] }[]>([]);
-  const [students, setStudents] = useState<string[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
 
-  // 🔹 Load approved students on page load
+  // Load approved students and existing groups
   useEffect(() => {
-    const approvedStudents = JSON.parse(localStorage.getItem("approvedStudents") || "[]");
-    const list = approvedStudents.map((s: { name?: string; email: string }) => s.name || s.email);
-    setStudents(list);
+    const approvedStudents: Student[] = JSON.parse(
+      localStorage.getItem("approvedStudents") || "[]"
+    );
+    setStudents(approvedStudents);
+
+    const savedGroups: Group[] = JSON.parse(
+      localStorage.getItem("createdGroups") || "[]"
+    );
+    setGroups(savedGroups);
   }, []);
 
+  // Add selected student to members list
+  const handleAddMember = () => {
+    if (!selectedMember) return;
+    if (members.includes(selectedMember)) {
+      alert("⚠️ This student is already added to the group.");
+      return;
+    }
+    setMembers([...members, selectedMember]);
+    setSelectedMember("");
+  };
+
+  // Remove student from members list
+  const handleRemoveMember = (member: string) => {
+    setMembers(members.filter((m) => m !== member));
+  };
+
+  // Create new group
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!groupName || members.length === 0) {
-      alert("⚠️ Please enter a group name and select at least one student.");
+      alert("⚠️ Please enter a group name and add at least one student.");
       return;
     }
 
-    const newGroup = { name: groupName, members };
-    setGroups([...groups, newGroup]);
+    const newGroupId = Date.now();
+    const newGroup: Group = { id: newGroupId, name: groupName, members };
 
-    alert(
-      `✅ Group Created!\n\nGroup: ${groupName}\nMembers: ${members.join(", ")}`
+    // Update students with groupId
+    const updatedStudents = students.map((s) =>
+      members.includes(s.email) ? { ...s, groupId: newGroupId } : s
     );
+
+    const updatedGroups = [...groups, newGroup];
+    setGroups(updatedGroups);
+    setStudents(updatedStudents);
+
+    // Persist to localStorage
+    localStorage.setItem("createdGroups", JSON.stringify(updatedGroups));
+    localStorage.setItem("approvedStudents", JSON.stringify(updatedStudents));
+
+    alert(`✅ Group Created!\n\nGroup: ${groupName}\nMembers: ${members.join(", ")}`);
 
     // Reset form
     setGroupName("");
     setMembers([]);
   };
 
-  const handleMemberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-    setMembers(selected);
+  // Delete group
+  const handleDeleteGroup = (index: number) => {
+    if (!window.confirm("Are you sure you want to delete this group?")) return;
+
+    const groupToDelete = groups[index];
+
+    // Remove groupId from assigned students
+    const updatedStudents = students.map((s) =>
+      groupToDelete.members.includes(s.email) ? { ...s, groupId: undefined } : s
+    );
+
+    const updatedGroups = groups.filter((_, i) => i !== index);
+
+    setGroups(updatedGroups);
+    setStudents(updatedStudents);
+
+    localStorage.setItem("createdGroups", JSON.stringify(updatedGroups));
+    localStorage.setItem("approvedStudents", JSON.stringify(updatedStudents));
   };
 
   return (
@@ -57,14 +118,13 @@ export default function AdminCreateGroup() {
           </p>
         </div>
 
-        {/* Form Card */}
+        {/* Create Group Form */}
         <div
-          className="card shadow border-0 rounded-4 mx-auto"
-          style={{ maxWidth: "600px", backgroundColor: "#ffffff" }}
+          className="card shadow border-0 rounded-4 mx-auto mb-5"
+          style={{ maxWidth: "650px", backgroundColor: "#ffffff" }}
         >
           <div className="card-body p-4">
-            <form onSubmit={handleSubmit} className="text-start">
-              {/* Group Name */}
+            <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label className="form-label fw-bold">Group Name</label>
                 <input
@@ -77,33 +137,53 @@ export default function AdminCreateGroup() {
                 />
               </div>
 
-              {/* Members Selection */}
               <div className="mb-3">
-                <label className="form-label fw-bold">Select Members</label>
-                <select
-                  className="form-select"
-                  multiple
-                  value={members}
-                  onChange={handleMemberChange}
-                  required
-                  style={{ height: "120px" }}
-                >
-                  {students.length > 0 ? (
-                    students.map((student, index) => (
-                      <option key={index} value={student}>
-                        {student}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No approved students found</option>
-                  )}
-                </select>
-                <small className="text-muted">
-                  Hold <b>Ctrl</b> (Windows) or <b>Command</b> (Mac) to select multiple.
-                </small>
+                <label className="form-label fw-bold">Add Members</label>
+                <div className="d-flex gap-2">
+                  <select
+                    className="form-select"
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                  >
+                    <option value="">-- Select a student --</option>
+                    {students
+                      .filter((s) => !s.groupId)
+                      .map((student) => (
+                        <option key={student.email} value={student.email}>
+                          {student.name || student.email}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-dark fw-semibold"
+                    onClick={handleAddMember}
+                  >
+                    ➕ Add
+                  </button>
+                </div>
               </div>
 
-              {/* Submit Button */}
+              {members.length > 0 && (
+                <ul className="list-group mb-3">
+                  {members.map((m) => (
+                    <li
+                      key={m}
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                    >
+                      {m}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleRemoveMember(m)}
+                      >
+                        ❌ Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               <div className="d-grid mt-4">
                 <button
                   className="btn btn-dark btn-lg rounded-3 fw-semibold"
@@ -116,7 +196,7 @@ export default function AdminCreateGroup() {
           </div>
         </div>
 
-        {/* Groups List */}
+        {/* List of Groups */}
         {groups.length > 0 && (
           <div className="mt-5">
             <h3 className="fw-bold text-light">📋 Created Groups</h3>
@@ -126,13 +206,22 @@ export default function AdminCreateGroup() {
                   <tr>
                     <th>Group Name</th>
                     <th>Members</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {groups.map((g, index) => (
-                    <tr key={index}>
-                      <td>{g.name}</td>
+                    <tr key={g.id}>
+                      <td className="fw-semibold">{g.name}</td>
                       <td>{g.members.join(", ")}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleDeleteGroup(index)}
+                        >
+                          🗑 Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

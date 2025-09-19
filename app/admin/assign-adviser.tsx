@@ -1,80 +1,182 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface AdviserAssignment {
+  groupId: number;
+  groupName: string;
+  adviser: string;
+  panels: string[];
+}
+
+interface ProjectGroup {
+  groupId: number;
+  groupName: string;
+  members: string[]; // student emails
+}
+
+interface Panel {
+  email: string;
+  password: string;
+  image: string;
+  groupId?: number;
+  notifications?: { message: string; type: string }[];
+}
+
+interface Student {
+  email: string;
+  name?: string;
+  groupId?: number;
+  notifications?: { message: string; type: string }[];
+}
 
 export default function AdminAssignAdviser() {
-  const [student, setStudent] = useState("");
+  const [groupId, setGroupId] = useState<number | "">("");
   const [adviser, setAdviser] = useState("");
-  const [panels, setPanels] = useState<string[]>([]);
+  const [selectedPanels, setSelectedPanels] = useState<string[]>([]);
+  const [groups, setGroups] = useState<ProjectGroup[]>([]);
+  const [registeredPanels, setRegisteredPanels] = useState<Panel[]>([]);
+  const [faculty, setFaculty] = useState<string[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
 
-  // 🔹 Dummy data (replace with backend data later)
-  const students = ["Juan Dela Cruz", "Maria Santos", "Pedro Reyes"];
-  const faculty = ["Prof. Cruz", "Dr. Santos", "Engr. Dela Peña", "Prof. Reyes"];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(
-      `✅ Adviser Assigned!\n\nStudent: ${student}\nAdviser: ${adviser}\nPanels: ${panels.join(
-        ", "
-      )}`
+  // Load groups, panels, faculty, and students
+  useEffect(() => {
+    const storedGroups: ProjectGroup[] = JSON.parse(
+      localStorage.getItem("createdGroups") || "[]"
     );
+    const formattedGroups = storedGroups.map((g: any) => ({
+      groupId: g.id,
+      groupName: g.name,
+      members: g.members, // student emails
+    }));
+    setGroups(formattedGroups);
 
-    // Reset after submit
-    setStudent("");
-    setAdviser("");
-    setPanels([]);
-  };
+    const storedPanels: Panel[] = JSON.parse(localStorage.getItem("panels") || "[]");
+    setRegisteredPanels(storedPanels);
+
+    const registeredInstructors = JSON.parse(
+      localStorage.getItem("registeredInstructors") || "[]"
+    );
+    const facultyList = registeredInstructors.map(
+      (inst: { name: string; email: string }) => `${inst.name} (${inst.email})`
+    );
+    setFaculty(facultyList);
+
+    const approvedStudents: Student[] = JSON.parse(
+      localStorage.getItem("approvedStudents") || "[]"
+    );
+    setStudents(approvedStudents);
+  }, []);
 
   const handlePanelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-    setPanels(selected);
+    setSelectedPanels(selected);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!groupId || !adviser) return;
+
+    const group = groups.find((g) => g.groupId === groupId);
+    if (!group) return;
+
+    // Save adviser assignments
+    const storedAssignments: AdviserAssignment[] = JSON.parse(
+      localStorage.getItem("adviserAssignments") || "[]"
+    );
+    const existingIndex = storedAssignments.findIndex((a) => a.groupId === groupId);
+    if (existingIndex >= 0) {
+      storedAssignments[existingIndex] = {
+        groupId,
+        groupName: group.groupName,
+        adviser,
+        panels: selectedPanels,
+      };
+    } else {
+      storedAssignments.push({
+        groupId,
+        groupName: group.groupName,
+        adviser,
+        panels: selectedPanels,
+      });
+    }
+    localStorage.setItem("adviserAssignments", JSON.stringify(storedAssignments));
+
+    // Update students
+    const updatedStudents = students.map((s) => {
+      if (group.members.includes(s.email)) {
+        const notifs = s.notifications || [];
+        notifs.push({
+          message: `✅ You have been assigned Adviser: ${adviser}. Panels: ${selectedPanels.join(", ")}`,
+          type: "success",
+        });
+        return { ...s, notifications: notifs, groupId: group.groupId };
+      }
+      return s;
+    });
+    localStorage.setItem("approvedStudents", JSON.stringify(updatedStudents));
+
+    // Update panels
+    const updatedPanels = registeredPanels.map((p) => {
+      if (selectedPanels.includes(p.email)) {
+        const notifs = p.notifications || [];
+        notifs.push({
+          message: `✅ You are assigned to group "${group.groupName}" with Adviser: ${adviser}`,
+          type: "success",
+        });
+        return { ...p, groupId: group.groupId, notifications: notifs };
+      }
+      return p;
+    });
+    localStorage.setItem("panels", JSON.stringify(updatedPanels));
+
+    alert(`✅ Adviser & Panels assigned successfully for group "${group.groupName}"!`);
+
+    // Reset form
+    setGroupId("");
+    setAdviser("");
+    setSelectedPanels([]);
   };
 
   return (
     <div
       className="min-vh-100 p-4"
       style={{
-        background: "linear-gradient(135deg, #2c2c2c 0%, #3a3a3a 100%)", // ✅ light black gradient
+        background: "linear-gradient(135deg, #2c2c2c 0%, #3a3a3a 100%)",
         color: "#f8f9fa",
-        overflowY: "auto", // ✅ scrollable page
+        overflowY: "auto",
       }}
     >
       <div className="container">
-        {/* Header */}
         <div className="text-center mb-5">
-          <h1 className="fw-bold text-light">
-            👩‍🏫 Assign Advisers & Panels
-          </h1>
+          <h1 className="fw-bold text-light">👩‍🏫 Assign Advisers & Panels</h1>
           <p className="text-secondary fs-5">
-            Select a student and assign their adviser and panel members.
+            Select a group and assign their adviser and panel members.
           </p>
         </div>
 
-        {/* Form */}
         <div
           className="card shadow border-0 rounded-4 mx-auto"
           style={{ maxWidth: "650px", backgroundColor: "#ffffff" }}
         >
           <div className="card-body p-4">
             <form onSubmit={handleSubmit} className="text-start">
-              {/* Student Selection */}
               <div className="mb-3">
-                <label className="form-label fw-bold">Select Student</label>
+                <label className="form-label fw-bold">Select Group</label>
                 <select
                   className="form-select"
-                  value={student}
-                  onChange={(e) => setStudent(e.target.value)}
+                  value={groupId}
+                  onChange={(e) => setGroupId(Number(e.target.value))}
                   required
                 >
-                  <option value="">-- Choose Student --</option>
-                  {students.map((s, index) => (
-                    <option key={index} value={s}>
-                      {s}
+                  <option value="">-- Choose Group --</option>
+                  {groups.map((g) => (
+                    <option key={g.groupId} value={g.groupId}>
+                      {g.groupName}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Adviser Selection */}
               <div className="mb-3">
                 <label className="form-label fw-bold">Assign Adviser</label>
                 <select
@@ -92,19 +194,18 @@ export default function AdminAssignAdviser() {
                 </select>
               </div>
 
-              {/* Panel Selection */}
               <div className="mb-3">
                 <label className="form-label fw-bold">Assign Panel Members</label>
                 <select
                   className="form-select"
                   multiple
-                  value={panels}
+                  value={selectedPanels}
                   onChange={handlePanelChange}
-                  style={{ height: "120px" }}
+                  style={{ height: "150px" }}
                 >
-                  {faculty.map((f, index) => (
-                    <option key={index} value={f}>
-                      {f}
+                  {registeredPanels.map((p) => (
+                    <option key={p.email} value={p.email}>
+                      {p.email}
                     </option>
                   ))}
                 </select>
@@ -113,7 +214,6 @@ export default function AdminAssignAdviser() {
                 </small>
               </div>
 
-              {/* Submit Button */}
               <div className="d-grid mt-4">
                 <button
                   className="btn btn-dark btn-lg rounded-3 fw-semibold"
@@ -126,7 +226,6 @@ export default function AdminAssignAdviser() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-5 small text-light">
           &copy; {new Date().getFullYear()} Papertrail · Thesis Management System
         </div>

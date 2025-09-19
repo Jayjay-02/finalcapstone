@@ -2,7 +2,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 
-export default function AdminLogin() {
+export default function PanelLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,15 +10,25 @@ export default function AdminLogin() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const storedData = localStorage.getItem("adminAccount");
+    const storedData = localStorage.getItem("panels");
     if (!storedData) {
-      setError("No account found. Please signup first.");
+      setError("No panel accounts found. Please register first.");
       return;
     }
-    const admin = JSON.parse(storedData);
-    if (admin.email === email && admin.password === password) {
+
+    const panels = JSON.parse(storedData) as {
+      email: string;
+      password: string;
+      image?: string;
+      name?: string;
+    }[];
+
+    const panel = panels.find(p => p.email === email && p.password === password);
+
+    if (panel) {
       setError("");
-      alert("Login successful!");
+      // Save only email to connect with dashboard
+      localStorage.setItem("loggedInPanel", panel.email);
       router.push("/panel/dashboard");
     } else {
       setError("Invalid email or password.");
@@ -28,7 +38,6 @@ export default function AdminLogin() {
   return (
     <div className="container-fluid px-0" style={{ minHeight: "100vh" }}>
       <div className="row g-0" style={{ minHeight: "100vh" }}>
-        
         {/* LEFT SIDE */}
         <div className="col-12 col-lg-6 d-flex flex-column justify-content-center align-items-center position-relative bg-light">
           <div
@@ -66,21 +75,22 @@ export default function AdminLogin() {
         {/* RIGHT SIDE */}
         <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center bg-light">
           <div className="bg-white rounded-4 shadow p-5" style={{ width: "100%", maxWidth: 420 }}>
-            <h3 className="fw-bold mb-1">Welcome to PaperTrail</h3>
-            <p className="text-muted mb-4">A Thesis Management System</p>
+            <h3 className="fw-bold mb-1">Panel Login</h3>
+            <p className="text-muted mb-4">Access your Panel Account</p>
 
             <form onSubmit={handleSubmit}>
               <div className="form-floating mb-3">
                 <input
                   type="email"
                   className="form-control"
-                  id="adminEmail"
+                  id="panelEmail"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <label htmlFor="panelEmail">Email</label>
               </div>
+
               <div className="form-floating mb-3">
                 <input
                   type="password"
@@ -92,6 +102,7 @@ export default function AdminLogin() {
                 />
                 <label htmlFor="panelPassword">Password</label>
               </div>
+
               {error && <div className="alert alert-danger py-2">{error}</div>}
 
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -100,7 +111,7 @@ export default function AdminLogin() {
                   className="text-decoration-none small text-muted"
                   onClick={(e) => e.preventDefault()}
                 >
-                  Forgot Password ?
+                  Forgot Password?
                 </a>
               </div>
 
@@ -111,7 +122,6 @@ export default function AdminLogin() {
                 Login
               </button>
 
-              {/* REGISTER / SIGNUP */}
               <div className="text-center">
                 <span className="me-1 text-muted">No account?</span>
                 <a
@@ -129,7 +139,6 @@ export default function AdminLogin() {
             </form>
           </div>
         </div>
-
       </div>
     </div>
   );

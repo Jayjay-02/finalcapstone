@@ -1,10 +1,12 @@
+// AdminScheduleDefense.tsx
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useEffect, useState } from "react";
+import { Panel } from "./register-panel";
 
 interface StudentGroup {
   id: number;
-  groupName: string;
-  members: string[]; // list of student names
+  name: string;
+  members: string[];
 }
 
 interface DefenseSchedule {
@@ -20,23 +22,24 @@ export default function AdminScheduleDefense() {
   const [datetime, setDatetime] = useState("");
   const [panel, setPanel] = useState<string[]>([]);
   const [schedules, setSchedules] = useState<DefenseSchedule[]>([]);
+  const [panels, setPanels] = useState<Panel[]>([]);
 
-  // faculty list (can also be pulled from localStorage if dynamic)
-  const faculty = ["Prof. Cruz", "Dr. Santos", "Prof. Reyes", "Dr. Villanueva"];
-
-  // Load student groups from localStorage
+  // Load groups, panels, schedules
   useEffect(() => {
-    const registeredStudents = JSON.parse(localStorage.getItem("registeredStudents") || "[]");
-    // Expect registeredStudents = [{id:1, groupName:"Group A", members:["Alice","Bob"]}, ...]
+    const createdGroups: StudentGroup[] = JSON.parse(localStorage.getItem("createdGroups") || "[]");
+    setGroups(createdGroups);
 
-    if (registeredStudents.length > 0) {
-      setGroups(registeredStudents);
-    }
+    const registeredPanels: Panel[] = JSON.parse(localStorage.getItem("panels") || "[]");
+    setPanels(registeredPanels);
 
-    // Load existing schedules
-    const savedSchedules = JSON.parse(localStorage.getItem("defenseSchedules") || "[]");
+    const savedSchedules: DefenseSchedule[] = JSON.parse(localStorage.getItem("defenseSchedules") || "[]");
     setSchedules(savedSchedules);
   }, []);
+
+  const handlePanelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = Array.from(e.target.selectedOptions, (option) => option.value);
+    setPanel(selected);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,157 +57,113 @@ export default function AdminScheduleDefense() {
 
     const newSchedule: DefenseSchedule = {
       groupId: selectedGroup.id,
-      groupName: selectedGroup.groupName,
+      groupName: selectedGroup.name,
       datetime,
-      panel
+      panel,
     };
 
     const updatedSchedules = [...schedules, newSchedule];
     setSchedules(updatedSchedules);
     localStorage.setItem("defenseSchedules", JSON.stringify(updatedSchedules));
 
-    alert(
-      `✅ Defense Scheduled!\n\nGroup: ${selectedGroup.groupName}\nDate: ${datetime}\nPanel: ${panel.join(", ")}`
-    );
+    alert(`✅ Defense Scheduled for ${selectedGroup.name}!\nPanels: ${panel.join(", ")}`);
 
-    // Reset form
-    setGroupId("");
-    setDatetime("");
-    setPanel([]);
-  };
-
-  const handlePanelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-    setPanel(selected);
+    setGroupId(""); setDatetime(""); setPanel([]);
   };
 
   return (
-    <div
-      className="min-vh-100 p-5"
-      style={{ background: "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)" }}
-    >
-      <div className="container">
-        {/* Header */}
-        <div className="text-center mb-5">
-          <h1 className="fw-bold" style={{ color: "#2c2c2c" }}>
-            📅 Schedule Thesis Defenses
-          </h1>
-          <p className="text-muted fs-5">
-            Assign defense dates and panels for student groups.
-          </p>
+    <div className="container py-5">
+      <h2 className="fw-bold mb-4 text-center">📅 Schedule Thesis Defenses</h2>
+
+      <form onSubmit={handleSubmit} className="card p-4 shadow-lg border-0 mb-5">
+        {/* Select Group */}
+        <div className="mb-3">
+          <label className="form-label fw-bold">Select Group</label>
+          <select
+            className="form-select"
+            value={groupId}
+            onChange={(e) => setGroupId(Number(e.target.value))}
+            required
+          >
+            <option value="">-- Choose Group --</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} ({g.members.join(", ")})
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Form Card */}
-        <div
-          className="card shadow-sm border-0 rounded-4 mx-auto"
-          style={{ maxWidth: "650px" }}
-        >
-          <div className="card-body p-4">
-            <form onSubmit={handleSubmit} className="text-start">
-              {/* Select Group */}
-              <div className="mb-3">
-                <label className="form-label fw-bold">Select Group</label>
-                <select
-                  className="form-select"
-                  value={groupId}
-                  onChange={(e) => setGroupId(Number(e.target.value))}
-                  required
-                >
-                  <option value="">-- Choose Group --</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.groupName} ({g.members.join(", ")})
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* Date & Time */}
+        <div className="mb-3">
+          <label className="form-label fw-bold">Defense Date & Time</label>
+          <input
+            type="datetime-local"
+            className="form-control"
+            value={datetime}
+            onChange={(e) => setDatetime(e.target.value)}
+            required
+          />
+        </div>
 
-              {/* Date & Time */}
-              <div className="mb-3">
-                <label className="form-label fw-bold">Defense Date & Time</label>
-                <input
-                  type="datetime-local"
-                  className="form-control"
-                  value={datetime}
-                  onChange={(e) => setDatetime(e.target.value)}
-                  required
-                />
-              </div>
+        {/* Panel Members */}
+        <div className="mb-3">
+          <label className="form-label fw-bold">Select Panel Members</label>
+          <select
+            className="form-select"
+            multiple
+            value={panel}
+            onChange={handlePanelChange}
+            required
+            style={{ height: "200px", overflowY: "scroll" }} // scrollable and fixed height
+          >
+            {panels.map((p, index) => (
+              <option key={index} value={p.name}>
+                {p.name} ({p.email})
+              </option>
+            ))}
+          </select>
+          <small className="text-muted">
+            Hold <b>Ctrl</b> (Windows) or <b>Command</b> (Mac) to select multiple.
+          </small>
+        </div>
 
-              {/* Select Panel Members */}
-              <div className="mb-3">
-                <label className="form-label fw-bold">Select Panel Members</label>
-                <select
-                  className="form-select"
-                  multiple
-                  value={panel}
-                  onChange={handlePanelChange}
-                  required
-                >
-                  {faculty.map((f, index) => (
-                    <option key={index} value={f}>
-                      {f}
-                    </option>
-                  ))}
-                </select>
-                <small className="text-muted">
-                  Hold <b>Ctrl</b> (Windows) or <b>Command</b> (Mac) to select multiple.
-                </small>
-              </div>
+        <button className="btn btn-dark w-100" type="submit">
+          ✅ Schedule Defense
+        </button>
+      </form>
 
-              {/* Submit Button */}
-              <div className="d-grid mt-4">
-                <button
-                  className="btn btn-dark btn-lg rounded-3"
-                  style={{ backgroundColor: "#2c2c2c", borderColor: "#2c2c2c" }}
-                  type="submit"
-                >
-                  ✅ Schedule Defense
-                </button>
-              </div>
-            </form>
+      {/* Scheduled Defenses Table */}
+      {schedules.length > 0 && (
+        <div className="card shadow-lg border-0">
+          <div className="card-body">
+            <h3 className="fw-bold mb-3">📋 Scheduled Defenses</h3>
+            <table className="table table-striped align-middle text-center">
+              <thead className="table-dark">
+                <tr>
+                  <th>Group</th>
+                  <th>Members</th>
+                  <th>Date & Time</th>
+                  <th>Panel</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedules.map((s, index) => {
+                  const group = groups.find((g) => g.id === s.groupId);
+                  return (
+                    <tr key={index}>
+                      <td>{s.groupName}</td>
+                      <td>{group ? group.members.join(", ") : "N/A"}</td>
+                      <td>{new Date(s.datetime).toLocaleString()}</td>
+                      <td>{s.panel.join(", ")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        {/* Scheduled Defenses List */}
-        {schedules.length > 0 && (
-          <div className="mt-5">
-            <h3 className="fw-bold" style={{ color: "#2c2c2c" }}>
-              📋 Scheduled Defenses
-            </h3>
-            <div className="table-responsive">
-              <table className="table table-bordered table-striped mt-3">
-                <thead style={{ backgroundColor: "#e6e6e6" }}>
-                  <tr>
-                    <th>Group</th>
-                    <th>Members</th>
-                    <th>Date & Time</th>
-                    <th>Panel</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schedules.map((s, index) => {
-                    const group = groups.find((g) => g.id === s.groupId);
-                    return (
-                      <tr key={index}>
-                        <td>{s.groupName}</td>
-                        <td>{group ? group.members.join(", ") : "N/A"}</td>
-                        <td>{new Date(s.datetime).toLocaleString()}</td>
-                        <td>{s.panel.join(", ")}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="text-center mt-5 small text-muted">
-          &copy; {new Date().getFullYear()} Papertrail · Thesis Management System
-        </div>
-      </div>
+      )}
     </div>
   );
 }

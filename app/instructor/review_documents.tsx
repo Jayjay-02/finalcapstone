@@ -15,14 +15,28 @@ export default function ReviewDocuments() {
     setDocuments(storedDocs);
   }, []);
 
-  function handleReview(docId: number) {
-    const updatedDocs = documents.map((doc) =>
-      doc.id === docId ? { ...doc, status: "Reviewed" } : doc
+  // Review document by opening in new tab and mark as Reviewed
+  function handleReview(doc: { id: number; file: string }) {
+    // Open document in new tab
+    window.open(`/files/${doc.file}`, "_blank");
+
+    // Mark as Reviewed
+    const updatedDocs = documents.map((d) =>
+      d.id === doc.id ? { ...d, status: "Reviewed" } : d
     );
     setDocuments(updatedDocs);
     localStorage.setItem("documents", JSON.stringify(updatedDocs));
-    alert(`📄 Document ID ${docId} marked as Reviewed.`);
   }
+
+  // Download document
+  const handleDownload = (file: string) => {
+    const link = document.createElement("a");
+    link.href = `/files/${file}`;
+    link.download = file;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="container py-5">
@@ -47,9 +61,9 @@ export default function ReviewDocuments() {
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="list-group-item d-flex justify-content-between align-items-center"
+              className="list-group-item d-flex justify-content-between align-items-center flex-wrap"
             >
-              <div>
+              <div className="mb-2 mb-md-0">
                 <h6 className="mb-1 fw-semibold">{doc.title}</h6>
                 <small className="text-muted">File: {doc.file}</small>
                 <br />
@@ -63,12 +77,20 @@ export default function ReviewDocuments() {
                   {doc.status}
                 </span>
               </div>
-              <button
-                className="btn btn-dark btn-sm"
-                onClick={() => handleReview(doc.id)}
-              >
-                Review
-              </button>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-dark btn-sm"
+                  onClick={() => handleReview(doc)}
+                >
+                  Review
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleDownload(doc.file)}
+                >
+                  ⬇ Download
+                </button>
+              </div>
             </div>
           ))}
         </div>

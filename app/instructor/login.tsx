@@ -1,65 +1,72 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function InstructorLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const savedEmail = localStorage.getItem("instructorEmail");
-    const savedPassword = localStorage.getItem("instructorPassword");
+    try {
+      const storedData = await AsyncStorage.getItem("registeredInstructors");
+      const stored = storedData ? JSON.parse(storedData) : [];
 
-    if (email === savedEmail && password === savedPassword) {
-      setError("");
-      router.push("/instructor/dashboard");
-    } else {
-      setError("Invalid email or password.");
+      const match = stored.find(
+        (inst: any) => inst.email === email && inst.password === password
+      );
+
+      if (match) {
+        setError("");
+
+        if (rememberMe) {
+          await AsyncStorage.setItem("rememberInstructor", email);
+        } else {
+          await AsyncStorage.removeItem("rememberInstructor");
+        }
+
+        // Save full instructor info
+        await AsyncStorage.setItem("loggedInstructor", JSON.stringify(match));
+
+        router.push("/instructor/dashboard");
+      } else {
+        setError("❌ Invalid email or password.");
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError("Something went wrong. Try again.");
     }
   }
+
+  useEffect(() => {
+    (async () => {
+      const remembered = await AsyncStorage.getItem("rememberInstructor");
+      if (remembered) {
+        setEmail(remembered);
+        setRememberMe(true);
+      }
+
+      const loggedIn = await AsyncStorage.getItem("loggedInstructor");
+      if (loggedIn) {
+        router.push("/instructor/dashboard");
+      }
+    })();
+  }, []);
 
   return (
     <div className="container-fluid px-0" style={{ minHeight: "100vh" }}>
       <div className="row g-0" style={{ minHeight: "100vh" }}>
-        
         {/* Left Side */}
-        <div 
-          className="col-md-6 d-flex flex-column justify-content-center align-items-center position-relative" 
+        <div
+          className="col-md-6 d-flex flex-column justify-content-center align-items-center position-relative"
           style={{ backgroundColor: "#f9f9f9" }}
         >
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "50%",
-              backgroundColor: "#e0e0e0",
-              clipPath: "polygon(0 0, 100% 0, 0 100%)",
-            }}
-          >
-            <div style={{ padding: "20px" }}>
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  backgroundColor: "#fff",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                  boxShadow: "0 0 5px rgba(0,0,0,0.2)",
-                }}
-              >
-                Logo
-              </div>
-            </div>
-          </div>
           <h3 className="text-muted" style={{ zIndex: 1, color: "#444" }}>
             Image/Logo
           </h3>
@@ -71,20 +78,18 @@ export default function InstructorLogin() {
           style={{ backgroundColor: "#f5f5f5" }}
         >
           <div
-            className="bg-transparent p-4 rounded"
+            className="bg-white p-4 rounded shadow-sm"
             style={{ width: "100%", maxWidth: "400px" }}
           >
-            <h4 className="fw-bold mb-1" style={{ color: "#333" }}>
+            <h4 className="fw-bold mb-1 text-center" style={{ color: "#333" }}>
               Welcome to PaperTrail
             </h4>
-            <p
-              className="text-muted mb-4"
-              style={{ fontSize: "14px", color: "#555" }}
-            >
+            <p className="text-muted mb-4 text-center" style={{ fontSize: "14px" }}>
               A Thesis Management System
             </p>
 
             <form onSubmit={handleSubmit}>
+              {/* Email */}
               <div className="form-floating mb-3">
                 <input
                   type="email"
@@ -92,18 +97,17 @@ export default function InstructorLogin() {
                   id="instructorEmail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your Email Id"
+                  placeholder="Your Email"
                   autoComplete="username"
                   required
                 />
-                <label htmlFor="instructorEmail" style={{ color: "#444" }}>
-                  Email
-                </label>
+                <label htmlFor="instructorEmail">Email</label>
               </div>
 
-              <div className="form-floating mb-2">
+              {/* Password */}
+              <div className="form-floating mb-2 position-relative">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   className="form-control"
                   id="instructorPassword"
                   value={password}
@@ -112,12 +116,31 @@ export default function InstructorLogin() {
                   autoComplete="current-password"
                   required
                 />
-                <label htmlFor="instructorPassword" style={{ color: "#444" }}>
-                  Password
-                </label>
+                <label htmlFor="instructorPassword">Password</label>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-light position-absolute"
+                  style={{ top: "8px", right: "10px", fontSize: "12px" }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "🙈 Hide" : "👁 Show"}
+                </button>
               </div>
 
-              <div className="d-flex justify-content-end mb-3">
+              {/* Remember Me + Register */}
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={() => setRememberMe(!rememberMe)}
+                  />
+                  <label className="form-check-label" htmlFor="rememberMe">
+                    Remember me
+                  </label>
+                </div>
                 <a
                   href="#"
                   className="text-decoration-none"
@@ -131,25 +154,18 @@ export default function InstructorLogin() {
                 </a>
               </div>
 
-              {error && (
-                <div className="alert alert-danger py-2">{error}</div>
-              )}
+              {error && <div className="alert alert-danger py-2">{error}</div>}
 
               <button
                 type="submit"
-                className="btn w-100 rounded-0 fw-semibold"
-                style={{
-                  backgroundColor: "black",
-                  color: "white",
-                  fontSize: "16px",
-                }}
+                className="btn w-100 rounded-3 fw-semibold"
+                style={{ backgroundColor: "black", color: "white", fontSize: "16px" }}
               >
-                Login
+                🔑 Login
               </button>
             </form>
           </div>
         </div>
-
       </div>
     </div>
   );

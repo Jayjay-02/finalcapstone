@@ -2,46 +2,98 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 
+// Hashing using SubtleCrypto
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export default function StudentSignup() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  // Handle file upload
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePic(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!name || !email || !password) {
-      setError("Please fill in all fields.");
+    if (!name || !email || !password || !confirmPassword || !profilePic) {
+      setError("Please fill in all fields and upload a profile picture.");
       setSuccess("");
       return;
     }
 
-    // Get pending and approved students
-    const pending = JSON.parse(localStorage.getItem("pendingStudents") || "[]");
-    const approved = JSON.parse(localStorage.getItem("approvedStudents") || "[]");
-
-    // Check if email already exists
-    const exists = [...pending, ...approved].some(
-      (student: { email: string }) => student.email === email
-    );
-
-    if (exists) {
-      setError("This email is already registered.");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       setSuccess("");
       return;
     }
 
-    // Add new student to pending list with name, email, password
-    const newStudent = { name, email, password };
-    pending.push(newStudent);
-    localStorage.setItem("pendingStudents", JSON.stringify(pending));
+    try {
+      const hashedPassword = await hashPassword(password);
 
-    setError("");
-    setSuccess("Registration submitted! Awaiting admin approval...");
-    setTimeout(() => router.push("/student/login"), 1500);
+      const pendingStudents = JSON.parse(localStorage.getItem("pendingStudents") || "[]");
+      const approvedStudents = JSON.parse(localStorage.getItem("approvedStudents") || "[]");
+
+      // Check if email already exists
+      if (
+        pendingStudents.some((s: any) => s.email === email) ||
+        approvedStudents.some((s: any) => s.email === email)
+      ) {
+        setError("This email is already registered.");
+        setSuccess("");
+        return;
+      }
+
+      // New student entry
+      const newStudent = {
+        name,
+        email,
+        password: hashedPassword,
+        profilePic,
+        notifications: [] as { message: string; type: "info" | "success" }[],
+      };
+
+      const updatedPending = [...pendingStudents, newStudent];
+      localStorage.setItem("pendingStudents", JSON.stringify(updatedPending));
+
+      setError("");
+      setSuccess("Registration submitted! Awaiting admin approval...");
+
+      // Reset form fields
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setProfilePic(null);
+
+      // Redirect to login after short delay
+      setTimeout(() => router.push("/student/login"), 1500);
+    } catch (e) {
+      console.error("Signup error:", e);
+      setError("⚠️ Registration failed. Please try again later.");
+      setSuccess("");
+    }
   }
 
   return (
@@ -90,7 +142,7 @@ export default function StudentSignup() {
             <p className="text-muted mb-4" style={{ fontSize: "14px" }}>Create a new account</p>
 
             <form onSubmit={handleSubmit}>
-              {/* Name Input */}
+              {/* Name */}
               <div className="form-floating mb-3">
                 <input 
                   type="text" 
@@ -104,7 +156,7 @@ export default function StudentSignup() {
                 <label htmlFor="signupStudentName">Full Name</label>
               </div>
 
-              {/* Email Input */}
+              {/* Email */}
               <div className="form-floating mb-3">
                 <input 
                   type="email" 
@@ -118,10 +170,33 @@ export default function StudentSignup() {
                 <label htmlFor="signupStudentEmail">Email</label>
               </div>
 
-              {/* Password Input */}
-              <div className="form-floating mb-3">
+              {/* Profile Picture */}
+              <div className="mb-3">
+                <label htmlFor="signupStudentPic" className="form-label fw-semibold">Upload Profile Picture</label>
                 <input 
-                  type="password" 
+                  type="file" 
+                  accept="image/*"
+                  className="form-control"
+                  id="signupStudentPic"
+                  onChange={handleFileUpload}
+                  required
+                />
+                {profilePic && (
+                  <div className="text-center mt-2">
+                    <img 
+                      src={profilePic} 
+                      alt="Preview" 
+                      className="rounded-circle border" 
+                      style={{ width: "80px", height: "80px", objectFit: "cover" }} 
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className="form-floating mb-3 position-relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
                   className="form-control" 
                   id="signupStudentPassword" 
                   value={password}
@@ -130,6 +205,28 @@ export default function StudentSignup() {
                   required
                 />
                 <label htmlFor="signupStudentPassword">Password</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="btn btn-sm btn-outline-secondary position-absolute"
+                  style={{ top: "8px", right: "10px" }}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="form-floating mb-3">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className="form-control" 
+                  id="signupStudentConfirmPassword" 
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password" 
+                  required
+                />
+                <label htmlFor="signupStudentConfirmPassword">Confirm Password</label>
               </div>
 
               {error && <div className="alert alert-danger py-2">{error}</div>}

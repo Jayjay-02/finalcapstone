@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect, useState } from 'react';
 
@@ -5,6 +6,9 @@ interface Student {
   name: string;
   email: string;
   password: string;
+  profilePic?: string;
+  groupId?: number;
+  notifications?: { message: string; type: "info" | "success" }[];
 }
 
 interface DefenseSchedule {
@@ -18,56 +22,81 @@ export default function ApproveStudents() {
   const [approved, setApproved] = useState<Student[]>([]);
   const [schedules, setSchedules] = useState<DefenseSchedule[]>([]);
 
-  // Load data from localStorage
+  // Load data from AsyncStorage
   useEffect(() => {
-    const storedPending = JSON.parse(localStorage.getItem('pendingStudents') || '[]');
-    const storedApproved = JSON.parse(localStorage.getItem('approvedStudents') || '[]');
-    const storedSchedules = JSON.parse(localStorage.getItem('defenseSchedules') || '[]');
-    setPending(storedPending);
-    setApproved(storedApproved);
-    setSchedules(storedSchedules);
+    (async () => {
+      const storedPending = JSON.parse(await AsyncStorage.getItem('pendingStudents') || '[]');
+      const storedApproved = JSON.parse(await AsyncStorage.getItem('approvedStudents') || '[]');
+      const storedSchedules = JSON.parse(await AsyncStorage.getItem('defenseSchedules') || '[]');
+
+      setPending(storedPending);
+      setApproved(storedApproved);
+      setSchedules(storedSchedules);
+    })();
   }, []);
 
-  const approveStudent = (email: string) => {
+  const approveStudent = async (email: string) => {
     const student = pending.find(s => s.email === email);
     if (!student) return;
 
     const updatedPending = pending.filter(s => s.email !== email);
     const updatedApproved = [...approved, student];
 
-    localStorage.setItem('pendingStudents', JSON.stringify(updatedPending));
-    localStorage.setItem('approvedStudents', JSON.stringify(updatedApproved));
+    await AsyncStorage.setItem('pendingStudents', JSON.stringify(updatedPending));
+    await AsyncStorage.setItem('approvedStudents', JSON.stringify(updatedApproved));
 
     setPending(updatedPending);
     setApproved(updatedApproved);
   };
 
-  const rejectStudent = (email: string) => {
+  const rejectStudent = async (email: string) => {
     const updatedPending = pending.filter(s => s.email !== email);
-    localStorage.setItem('pendingStudents', JSON.stringify(updatedPending));
+    await AsyncStorage.setItem('pendingStudents', JSON.stringify(updatedPending));
     setPending(updatedPending);
   };
 
-  const scheduleDefense = (email: string) => {
+  const scheduleDefense = async (email: string) => {
     const date = prompt('Enter defense date (YYYY-MM-DD):');
     const time = prompt('Enter defense time (e.g., 2:00 PM):');
     if (!date || !time) return;
 
+    // Update defenseSchedules
     const updatedSchedules = [...schedules.filter(s => s.email !== email), { email, date, time }];
     setSchedules(updatedSchedules);
-    localStorage.setItem('defenseSchedules', JSON.stringify(updatedSchedules));
+    await AsyncStorage.setItem('defenseSchedules', JSON.stringify(updatedSchedules));
+
+    // Push notification to approvedStudents
+    const allApproved: Student[] = JSON.parse(await AsyncStorage.getItem('approvedStudents') || '[]');
+    const updatedApprovedStudents = allApproved.map((s) => {
+      if (s.email === email) {
+        const notifs = s.notifications || [];
+        notifs.push({
+          message: `📅 Your defense is scheduled on ${date} at ${time}`,
+          type: "info",
+        });
+        return { ...s, notifications: notifs };
+      }
+      return s;
+    });
+
+    await AsyncStorage.setItem('approvedStudents', JSON.stringify(updatedApprovedStudents));
+    setApproved(updatedApprovedStudents);
+
+    alert(`✅ Defense scheduled for ${email} on ${date} at ${time}`);
   };
 
   return (
     <div className="container mt-5">
       <h2 className="fw-bold mb-4">Approve Registered Students</h2>
 
+      {/* Pending Students */}
       {pending.length === 0 ? (
         <div className="alert alert-info">No pending students for approval.</div>
       ) : (
         <table className="table table-bordered">
           <thead style={{ backgroundColor: '#f8f9fa' }}>
             <tr>
+              <th>Profile</th>
               <th>Name</th>
               <th>Email</th>
               <th style={{ width: '200px' }}>Actions</th>
@@ -76,6 +105,18 @@ export default function ApproveStudents() {
           <tbody>
             {pending.map(student => (
               <tr key={student.email}>
+                <td>
+                  {student.profilePic ? (
+                    <img
+                      src={student.profilePic}
+                      alt="Profile"
+                      className="rounded-circle"
+                      style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                    />
+                  ) : (
+                    "N/A"
+                  )}
+                </td>
                 <td>{student.name}</td>
                 <td>{student.email}</td>
                 <td>
@@ -100,6 +141,7 @@ export default function ApproveStudents() {
 
       <hr className="my-4" />
 
+      {/* Approved Students */}
       <h4 className="fw-semibold">Approved Students</h4>
       {approved.length === 0 ? (
         <div className="alert alert-secondary">No students have been approved yet.</div>
@@ -107,6 +149,7 @@ export default function ApproveStudents() {
         <table className="table table-bordered">
           <thead style={{ backgroundColor: '#f8f9fa' }}>
             <tr>
+              <th>Profile</th>
               <th>Name</th>
               <th>Email</th>
               <th>Defense Schedule</th>
@@ -118,6 +161,18 @@ export default function ApproveStudents() {
               const sched = schedules.find(s => s.email === student.email);
               return (
                 <tr key={student.email}>
+                  <td>
+                    {student.profilePic ? (
+                      <img
+                        src={student.profilePic}
+                        alt="Profile"
+                        className="rounded-circle"
+                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                      />
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
                   <td>{student.name}</td>
                   <td>{student.email}</td>
                   <td>

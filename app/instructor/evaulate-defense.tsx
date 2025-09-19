@@ -1,35 +1,45 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface Defense {
+  id: number;
+  group: string;
+  topic: string;
+  score: string;
+  remarks: string;
+}
 
 export default function EvaluateDefenses() {
   const router = useRouter();
+  const [defenses, setDefenses] = useState<Defense[]>([]);
 
-  // Example defense list with scoring
-  const [defenses, setDefenses] = useState([
-    { id: 1, group: "Group A", topic: "AI in Education", score: "", remarks: "" },
-    { id: 2, group: "Group B", topic: "E-commerce Web App", score: "", remarks: "" },
-    { id: 3, group: "Group C", topic: "Climate Change Study", score: "", remarks: "" },
-  ]);
+  // Load defenses from localStorage
+  useEffect(() => {
+    const storedDefenses: Defense[] = JSON.parse(
+      localStorage.getItem("defenses") || "[]"
+    );
+    setDefenses(storedDefenses);
+  }, []);
 
   const handleScoreChange = (id: number, value: string) => {
-    setDefenses((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, score: value } : d))
-    );
+    const updated = defenses.map(d => d.id === id ? { ...d, score: value } : d);
+    setDefenses(updated);
+    localStorage.setItem("defenses", JSON.stringify(updated));
   };
 
   const handleRemarksChange = (id: number, value: string) => {
-    setDefenses((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, remarks: value } : d))
-    );
+    const updated = defenses.map(d => d.id === id ? { ...d, remarks: value } : d);
+    setDefenses(updated);
+    localStorage.setItem("defenses", JSON.stringify(updated));
   };
 
   const handleSubmit = (id: number) => {
-    const defense = defenses.find((d) => d.id === id);
+    const defense = defenses.find(d => d.id === id);
+    if (!defense) return;
     alert(
-      `✅ Evaluation submitted for ${defense?.group}\nTopic: ${defense?.topic}\nScore: ${defense?.score}\nRemarks: ${defense?.remarks}`
+      `✅ Evaluation submitted for ${defense.group}\nTopic: ${defense.topic}\nScore: ${defense.score}\nRemarks: ${defense.remarks}`
     );
-    // 🔹 Later: send to backend
   };
 
   return (
@@ -46,52 +56,55 @@ export default function EvaluateDefenses() {
       </div>
 
       {/* Defense Evaluation List */}
-      <div className="list-group shadow-sm">
-        {defenses.map((defense) => (
-          <div
-            key={defense.id}
-            className="list-group-item p-3"
-          >
-            <h6 className="fw-semibold">{defense.group}</h6>
-            <small className="text-muted">Topic: {defense.topic}</small>
+      {defenses.length === 0 ? (
+        <div className="alert alert-secondary text-center">
+          No defenses available to evaluate.
+        </div>
+      ) : (
+        <div className="list-group shadow-sm" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          {defenses.map(defense => (
+            <div key={defense.id} className="list-group-item p-3 mb-2 rounded shadow-sm">
+              <h6 className="fw-semibold">{defense.group}</h6>
+              <small className="text-muted">Topic: {defense.topic}</small>
 
-            {/* Score Input */}
-            <div className="mt-2">
-              <label className="form-label fw-semibold">Score</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                className="form-control"
-                placeholder="Enter score (0-100)"
-                value={defense.score}
-                onChange={(e) => handleScoreChange(defense.id, e.target.value)}
-              />
-            </div>
+              {/* Score Input */}
+              <div className="mt-2">
+                <label className="form-label fw-semibold">Score</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  className="form-control"
+                  placeholder="Enter score (0-100)"
+                  value={defense.score}
+                  onChange={e => handleScoreChange(defense.id, e.target.value)}
+                />
+              </div>
 
-            {/* Remarks Input */}
-            <div className="mt-2">
-              <label className="form-label fw-semibold">Remarks</label>
-              <textarea
-                className="form-control"
-                rows={2}
-                placeholder="Write your remarks..."
-                value={defense.remarks}
-                onChange={(e) => handleRemarksChange(defense.id, e.target.value)}
-              />
-            </div>
+              {/* Remarks Input */}
+              <div className="mt-2">
+                <label className="form-label fw-semibold">Remarks</label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  placeholder="Write your remarks..."
+                  value={defense.remarks}
+                  onChange={e => handleRemarksChange(defense.id, e.target.value)}
+                />
+              </div>
 
-            <div className="text-end mt-2">
-              <button
-                className="btn btn-dark btn-sm"
-                onClick={() => handleSubmit(defense.id)}
-              >
-                Submit Evaluation
-              </button>
+              <div className="text-end mt-2">
+                <button
+                  className="btn btn-dark btn-sm"
+                  onClick={() => handleSubmit(defense.id)}
+                >
+                  Submit Evaluation
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

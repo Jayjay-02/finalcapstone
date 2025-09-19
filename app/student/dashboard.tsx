@@ -10,16 +10,51 @@ export default function StudentDashboard() {
     profilePic: "https://via.placeholder.com/120",
   });
 
-  useEffect(() => {
-    // Get logged-in student data from localStorage
+  // Calendar + Time state
+  const [currentDate] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Load student data
+  const loadStudent = () => {
     const studentData = JSON.parse(localStorage.getItem("loggedInStudent") || "null");
     if (studentData) {
       setStudent({
-        name: studentData.email, // or studentData.name if you save a name during signup
-        profilePic: "https://via.placeholder.com/120", // replace if you later support profile uploads
+        name: studentData.name || studentData.email || "Student",
+        profilePic: studentData.profilePic || "https://via.placeholder.com/120",
       });
     }
+  };
+
+  useEffect(() => {
+    loadStudent();
+
+    // Update time every second
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+    // Listen for profile updates (from StudentProfile)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "loggedInStudent") loadStudent();
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
+
+  // Generate calendar
+  const getCalendarDays = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const calendarDays = [];
+    for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+    for (let d = 1; d <= daysInMonth; d++) calendarDays.push(d);
+    return calendarDays;
+  };
 
   const menuItems = [
     { key: "dashboard", label: "Dashboard" },
@@ -118,10 +153,48 @@ export default function StudentDashboard() {
           </div>
         );
       default:
+        const calendarDays = getCalendarDays();
+        const today = new Date().getDate();
+        const monthName = currentDate.toLocaleString("default", { month: "long" });
+
         return (
-          <div className="text-center">
+          <div className="text-center text-muted">
             <h2 className="fw-bold text-dark mb-3">🎓 Student Dashboard</h2>
             <p className="text-muted">Select an option from the menu to begin.</p>
+
+            {/* Live Time */}
+            <h4 className="fw-semibold mt-3">🕒 {currentTime.toLocaleTimeString()}</h4>
+
+            {/* Calendar */}
+            <div className="mt-4 shadow-sm rounded-4 bg-white p-4">
+              <h4 className="fw-bold mb-3">📅 {monthName} {currentDate.getFullYear()}</h4>
+              <div
+                className="d-grid"
+                style={{
+                  gridTemplateColumns: "repeat(7, 1fr)",
+                  gap: "5px",
+                  fontSize: "1rem",
+                }}
+              >
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="fw-bold text-center">{day}</div>
+                ))}
+                {calendarDays.map((day, idx) =>
+                  day ? (
+                    <div
+                      key={idx}
+                      className={`text-center py-2 rounded ${
+                        day === today ? "bg-primary text-white fw-bold" : "bg-light"
+                      }`}
+                    >
+                      {day}
+                    </div>
+                  ) : (
+                    <div key={idx}></div>
+                  )
+                )}
+              </div>
+            </div>
           </div>
         );
     }
@@ -130,9 +203,11 @@ export default function StudentDashboard() {
   return (
     <div className="container-fluid px-0" style={{ minHeight: "100vh" }}>
       <div className="row g-0" style={{ minHeight: "100vh" }}>
-        
         {/* Sidebar */}
-        <div className="col-12 col-md-3 col-lg-2 d-flex flex-column p-4 shadow-sm" style={{ backgroundColor: "#E0E0E0", color: "black" }}>
+        <div
+          className="col-12 col-md-3 col-lg-2 d-flex flex-column p-4 shadow-sm"
+          style={{ backgroundColor: "#E0E0E0", color: "black" }}
+        >
           <div className="text-center mb-4">
             <img
               src={student.profilePic}
@@ -168,7 +243,6 @@ export default function StudentDashboard() {
             {renderContent()}
           </div>
         </div>
-
       </div>
     </div>
   );

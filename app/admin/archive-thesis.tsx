@@ -1,125 +1,108 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface ThesisSubmission {
+  id: number;
+  topic: string;
+  status: string;
+  student: { full_name: string };
+  group: number;
+  created_at: string;
+  archived?: boolean;
+}
 
 export default function ArchiveThesis() {
-  const router = useRouter();
+  const [theses, setTheses] = useState<ThesisSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample thesis data
-  const [theses, setTheses] = useState([
-    { id: 1, title: "AI in Healthcare", group: "Group 1", status: "Ongoing" },
-    { id: 2, title: "Blockchain for Finance", group: "Group 2", status: "Completed" },
-    { id: 3, title: "IoT for Smart Cities", group: "Group 3", status: "Ongoing" },
-  ]);
+  const fetchArchivedTheses = async () => {
+    setLoading(true);
+    try {
+      // Update endpoint to fit your backend, add ?archived=true filter if supported
+      const resp = await fetch("/api/students/thesis/?archived=true");
+      if (!resp.ok) throw new Error("Failed to fetch");
+      const data = await resp.json();
+      setTheses(Array.isArray(data) ? data : [data]);
+    } catch (e) {
+      setTheses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const [archived, setArchived] = useState<any[]>([]);
+  useEffect(() => {
+    fetchArchivedTheses();
+  }, []);
 
-  // Archive function
-  const handleArchive = (id: number) => {
-    const thesisToArchive = theses.find((t) => t.id === id);
-    if (!thesisToArchive) return;
-
-    setArchived([...archived, thesisToArchive]);
-    setTheses(theses.filter((t) => t.id !== id));
+  // Restore thesis
+  const restoreThesis = async (id: number) => {
+    try {
+      const resp = await fetch(`/api/students/thesis/${id}/archive/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: false }),
+      });
+      if (!resp.ok) throw new Error("Restore failed");
+      fetchArchivedTheses();
+    } catch {
+      alert("Failed to restore thesis.");
+    }
   };
 
   return (
-    <div className="container py-5 d-flex justify-content-center">
-      <div className="card shadow border-0 w-100" style={{ maxWidth: "850px" }}>
-        <div className="card-body">
-          <h2 className="fw-bold mb-3 text-primary">📦 Archive Thesis</h2>
-          <p className="text-muted fw-light mb-4">
-            Select a thesis to archive. Archived theses will be shown below.
-          </p>
-
-          {/* Back Button */}
-          <button
-            className="btn btn-outline-secondary mb-4 rounded-pill px-4"
-            onClick={() => router.push("/admin/dashboard")}
-          >
-            ← Back to Dashboard
-          </button>
-
-          {/* Thesis Table */}
-          <div className="table-responsive mb-5">
-            <table className="table table-hover align-middle">
-              <thead className="table-light">
-                <tr className="fw-semibold text-muted small">
-                  <th>Title</th>
-                  <th>Group</th>
-                  <th>Status</th>
-                  <th className="text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {theses.length > 0 ? (
-                  theses.map((thesis) => (
-                    <tr key={thesis.id}>
-                      <td className="fw-semibold">{thesis.title}</td>
-                      <td>{thesis.group}</td>
-                      <td>
-                        <span
-                          className={`badge px-3 py-2 rounded-pill ${
-                            thesis.status === "Completed"
-                              ? "bg-success"
-                              : "bg-warning text-dark"
-                          }`}
-                        >
-                          {thesis.status}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        <button
-                          className="btn btn-sm btn-outline-dark rounded-pill px-3"
-                          onClick={() => handleArchive(thesis.id)}
-                        >
-                          Archive
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="text-center text-muted">
-                      No theses available to archive.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Archived Theses */}
-          <h5 className="fw-semibold text-secondary mb-3">📜 Archived Theses</h5>
-          <ul className="list-group list-group-flush">
-            {archived.length > 0 ? (
-              archived.map((item) => (
-                <li
-                  className="list-group-item small d-flex justify-content-between align-items-center"
-                  key={item.id}
-                >
-                  <div>
-                    <strong>{item.title}</strong> — {item.group}
-                  </div>
+    <div className="container py-5">
+      <h2 className="fw-bold mb-4 text-center">🗄 Archived Theses</h2>
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status" />
+        </div>
+      ) : theses.length === 0 ? (
+        <div className="alert alert-warning text-center">
+          No archived theses found.
+        </div>
+      ) : (
+        <table className="table table-bordered table-striped align-middle text-center">
+          <thead className="table-dark">
+            <tr>
+              <th>Student</th>
+              <th>Topic</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {theses.map((t) => (
+              <tr key={t.id}>
+                <td>{t.student?.full_name}</td>
+                <td>{t.topic}</td>
+                <td>
                   <span
-                    className={`badge px-3 py-2 rounded-pill ${
-                      item.status === "Completed"
+                    className={`badge ${
+                      t.status === "Approved"
                         ? "bg-success"
-                        : "bg-warning text-dark"
+                        : t.status === "Rejected"
+                        ? "bg-danger"
+                        : "bg-secondary"
                     }`}
                   >
-                    {item.status}
+                    {t.status}
                   </span>
-                </li>
-              ))
-            ) : (
-              <li className="list-group-item text-muted small">
-                No theses archived yet.
-              </li>
-            )}
-          </ul>
-        </div>
-      </div>
+                </td>
+                <td>{new Date(t.created_at).toLocaleString()}</td>
+                <td>
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => restoreThesis(t.id)}
+                  >
+                    Restore
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

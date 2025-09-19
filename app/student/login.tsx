@@ -2,35 +2,58 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 
+// Same hashing function used in signup
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export default function StudentLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Read approved students from localStorage
-    const approvedStudents = JSON.parse(localStorage.getItem("approvedStudents") || "[]");
+    try {
+      // ✅ Get approved students
+      const approvedStudents = JSON.parse(localStorage.getItem("approvedStudents") || "[]");
 
-    // Check if this email/password is approved
-    const studentFound = approvedStudents.find(
-      (s: { email: string; password: string }) => s.email === email && s.password === password
-    );
+      // ✅ Hash entered password
+      const hashedPassword = await hashPassword(password);
 
-    if (studentFound) {
-      setError("");
+      // ✅ Check credentials
+      const studentFound = approvedStudents.find(
+        (s: { email: string; password: string }) =>
+          s.email === email && s.password === hashedPassword
+      );
 
-      // Save logged-in student info for dashboard
-      localStorage.setItem("loggedInStudent", JSON.stringify({
-        name: studentFound.name || "Student",
-        email: studentFound.email
-      }));
+      if (studentFound) {
+        setError("");
 
-      router.push("/student/dashboard");
-    } else {
-      setError("You are not approved yet or credentials are incorrect.");
+        // ✅ Save login session
+        localStorage.setItem(
+          "loggedInStudent",
+          JSON.stringify({
+            name: studentFound.name || "Student",
+            email: studentFound.email,
+            profilePic: studentFound.profilePic || null,
+          })
+        );
+
+        // ✅ Redirect to dashboard
+        router.push("/student/dashboard");
+      } else {
+        setError("❌ Invalid credentials or not approved by admin yet.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("⚠️ Something went wrong. Please try again.");
     }
   }
 
@@ -83,6 +106,7 @@ export default function StudentLogin() {
             <p className="text-muted mb-4" style={{ fontSize: "14px" }}>Access your account</p>
 
             <form onSubmit={handleSubmit}>
+              {/* Email */}
               <div className="form-floating mb-3">
                 <input 
                   type="email" 
@@ -97,6 +121,7 @@ export default function StudentLogin() {
                 <label htmlFor="studentEmail">Email</label>
               </div>
 
+              {/* Password */}
               <div className="form-floating mb-3">
                 <input 
                   type="password" 

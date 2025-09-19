@@ -1,18 +1,58 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface DefenseSchedule {
+  groupId: number;
+  groupName: string;
+  datetime: string;
+  panel: string[];
+}
+
+interface Student {
+  name: string;
+  email: string;
+  groupId?: number;
+  notifications?: { message: string; type: "info" | "success" }[];
+}
 
 export default function StudentSchedules() {
-  const [schedules] = useState([
-    { date: "2025-09-01", time: "09:00 AM", event: "Proposal Defense", location: "Room 101" },
-    { date: "2025-09-05", time: "01:30 PM", event: "Adviser Meeting", location: "Library" },
-    { date: "2025-09-10", time: "10:00 AM", event: "Final Defense", location: "Main Hall" },
-  ]);
+  const [student, setStudent] = useState<Student | null>(null);
+  const [schedules, setSchedules] = useState<DefenseSchedule[]>([]);
+  const [notifications, setNotifications] = useState<
+    { message: string; type: "info" | "success" }[]
+  >([]);
 
-  const [notifications] = useState([
-    { message: "Your adviser added feedback to Chapter 2.", type: "info" },
-    { message: "Schedule for Proposal Defense has been updated.", type: "warning" },
-    { message: "Final Defense results will be released soon.", type: "success" },
-  ]);
+  const refreshData = () => {
+    const loggedIn: Student | null = JSON.parse(
+      localStorage.getItem("loggedInStudent") || "null"
+    );
+    if (!loggedIn) return setStudent(null);
+
+    setStudent(loggedIn);
+
+    // Load defense schedules
+    const allSchedules: DefenseSchedule[] = JSON.parse(
+      localStorage.getItem("defenseSchedules") || "[]"
+    );
+    setSchedules(allSchedules);
+
+    // Load notifications from approvedStudents
+    const approvedStudents: Student[] = JSON.parse(
+      localStorage.getItem("approvedStudents") || "[]"
+    );
+    const currentStudent = approvedStudents.find((s) => s.email === loggedIn.email);
+    setNotifications(currentStudent?.notifications || []);
+  };
+
+  useEffect(() => {
+    refreshData();
+    const interval = setInterval(refreshData, 5000); // refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const mySchedules = student?.groupId
+    ? schedules.filter((s) => s.groupId === student.groupId)
+    : [];
 
   return (
     <div className="container py-5">
@@ -22,26 +62,33 @@ export default function StudentSchedules() {
           <div className="card shadow-lg border-0">
             <div className="card-body">
               <h2 className="text-primary fw-bold mb-4 text-center">📅 My Schedules</h2>
-              <table className="table table-striped align-middle text-center">
-                <thead className="table-dark">
-                  <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Event</th>
-                    <th>Location</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schedules.map((s, i) => (
-                    <tr key={i}>
-                      <td>{s.date}</td>
-                      <td>{s.time}</td>
-                      <td>{s.event}</td>
-                      <td>{s.location}</td>
+              {mySchedules.length > 0 ? (
+                <table className="table table-striped align-middle text-center">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Event</th>
+                      <th>Panel</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {mySchedules.map((s, i) => {
+                      const dateObj = new Date(s.datetime);
+                      return (
+                        <tr key={i}>
+                          <td>{dateObj.toLocaleDateString()}</td>
+                          <td>{dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                          <td>{s.groupName} Defense</td>
+                          <td>{s.panel.join(", ")}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-muted text-center">No schedules assigned to your group yet.</p>
+              )}
             </div>
           </div>
         </div>
@@ -51,18 +98,18 @@ export default function StudentSchedules() {
           <div className="card shadow-lg border-0">
             <div className="card-body">
               <h2 className="text-success fw-bold mb-4 text-center">🔔 Notifications</h2>
-              <ul className="list-group">
-                {notifications.map((n, i) => (
-                  <li
-                    key={i}
-                    className={`list-group-item list-group-item-${
-                      n.type === "success" ? "success" : n.type === "warning" ? "warning" : "info"
-                    }`}
-                  >
-                    {n.message}
-                  </li>
-                ))}
-              </ul>
+              {notifications.length > 0 ? (
+                notifications
+                  .slice() // clone to prevent mutation
+                  .reverse() // show newest first
+                  .map((n, i) => (
+                    <div key={i} className={`alert alert-${n.type}`} role="alert">
+                      {n.message}
+                    </div>
+                  ))
+              ) : (
+                <div className="alert alert-secondary text-center">No new notifications</div>
+              )}
             </div>
           </div>
         </div>
