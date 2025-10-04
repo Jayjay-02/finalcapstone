@@ -57,10 +57,11 @@ export default function RegisterInstructor() {
       stored.push(newInstructor);
       await AsyncStorage.setItem("registeredInstructors", JSON.stringify(stored));
 
-      setSuccess("✅ Registration successful! Redirecting to login...");
+      setSuccess("✅ Registration successful!");
       setLoading(false);
 
-      setTimeout(() => router.push("/instructor/login"), 1500);
+      // ✅ Redirect to dashboard after register
+      setTimeout(() => router.push("/admin/dashboard"), 1500);
     } catch (err) {
       console.error("Registration Error:", err);
       setError("❌ Registration failed. Please try again later.");
@@ -69,9 +70,12 @@ export default function RegisterInstructor() {
   }
 
   return (
-    <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-      <div className="card shadow-lg border-0 p-4" style={{ width: "100%", maxWidth: 450 }}>
-        <h3 className="fw-bold text-center mb-4 text-primary">Instructor Registration</h3>
+    <div className="d-flex align-items-center justify-content-center vh-100 bg-white text-dark">
+      <div
+        className="card shadow border-0 p-4"
+        style={{ width: "100%", maxWidth: 500, backgroundColor: "black", color: "white" }}
+      >
+        <h3 className="fw-bold text-center mb-4">Instructor Registration</h3>
 
         <form onSubmit={handleSubmit}>
           {/* Profile Picture */}
@@ -85,8 +89,8 @@ export default function RegisterInstructor() {
               />
             ) : (
               <div
-                className="rounded-circle bg-secondary bg-opacity-25 d-flex justify-content-center align-items-center mb-3"
-                style={{ width: "100px", height: "100px", fontSize: "12px", color: "#666" }}
+                className="rounded-circle bg-light text-dark d-flex justify-content-center align-items-center mb-3"
+                style={{ width: "100px", height: "100px", fontSize: "12px" }}
               >
                 Upload
               </div>
@@ -104,42 +108,42 @@ export default function RegisterInstructor() {
           <div className="form-floating mb-3">
             <input
               type="text"
-              className="form-control"
+              className="form-control bg-dark text-white border-0"
               placeholder="Full Name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
             />
-            <label>Full Name</label>
+            <label className="text-white">Full Name</label>
           </div>
 
           {/* Email */}
           <div className="form-floating mb-3">
             <input
               type="email"
-              className="form-control"
+              className="form-control bg-dark text-white border-0"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <label>Email</label>
+            <label className="text-white">Email</label>
           </div>
 
           {/* Password */}
           <div className="form-floating mb-3 position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              className="form-control"
+              className="form-control bg-dark text-white border-0"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <label>Password</label>
+            <label className="text-white">Password</label>
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary position-absolute"
+              className="btn btn-sm btn-outline-light position-absolute"
               style={{ top: "8px", right: "10px" }}
               onClick={() => setShowPassword(!showPassword)}
             >
@@ -151,13 +155,13 @@ export default function RegisterInstructor() {
           <div className="form-floating mb-3">
             <input
               type={showPassword ? "text" : "password"}
-              className="form-control"
+              className="form-control bg-dark text-white border-0"
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            <label>Confirm Password</label>
+            <label className="text-white">Confirm Password</label>
           </div>
 
           {/* Error + Success Messages */}
@@ -166,18 +170,10 @@ export default function RegisterInstructor() {
 
           {/* Submit */}
           <div className="d-grid">
-            <button className="btn btn-primary fw-semibold" type="submit" disabled={loading}>
+            <button className="btn btn-light fw-semibold" type="submit" disabled={loading}>
               {loading ? "Registering..." : "Register"}
             </button>
           </div>
-
-          {/* Already have account */}
-          <p className="text-center mt-3 mb-0 small">
-            Already have an account?{" "}
-            <a href="/instructor/login" className="text-decoration-none fw-semibold">
-              Login here
-            </a>
-          </p>
         </form>
       </div>
     </div>

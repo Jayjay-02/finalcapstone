@@ -37,8 +37,9 @@ export default function AdminAssignAdviser() {
   const [registeredPanels, setRegisteredPanels] = useState<Panel[]>([]);
   const [faculty, setFaculty] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [assignments, setAssignments] = useState<AdviserAssignment[]>([]);
 
-  // Load groups, panels, faculty, and students
+  // Load groups, panels, faculty, students, and assignments
   useEffect(() => {
     const storedGroups: ProjectGroup[] = JSON.parse(
       localStorage.getItem("createdGroups") || "[]"
@@ -46,11 +47,13 @@ export default function AdminAssignAdviser() {
     const formattedGroups = storedGroups.map((g: any) => ({
       groupId: g.id,
       groupName: g.name,
-      members: g.members, // student emails
+      members: g.members,
     }));
     setGroups(formattedGroups);
 
-    const storedPanels: Panel[] = JSON.parse(localStorage.getItem("panels") || "[]");
+    const storedPanels: Panel[] = JSON.parse(
+      localStorage.getItem("panels") || "[]"
+    );
     setRegisteredPanels(storedPanels);
 
     const registeredInstructors = JSON.parse(
@@ -65,6 +68,11 @@ export default function AdminAssignAdviser() {
       localStorage.getItem("approvedStudents") || "[]"
     );
     setStudents(approvedStudents);
+
+    const storedAssignments: AdviserAssignment[] = JSON.parse(
+      localStorage.getItem("adviserAssignments") || "[]"
+    );
+    setAssignments(storedAssignments);
   }, []);
 
   const handlePanelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -79,40 +87,41 @@ export default function AdminAssignAdviser() {
     const group = groups.find((g) => g.groupId === groupId);
     if (!group) return;
 
-    // Save adviser assignments
-    const storedAssignments: AdviserAssignment[] = JSON.parse(
-      localStorage.getItem("adviserAssignments") || "[]"
-    );
-    const existingIndex = storedAssignments.findIndex((a) => a.groupId === groupId);
+    let updatedAssignments = [...assignments];
+    const existingIndex = updatedAssignments.findIndex((a) => a.groupId === groupId);
+
     if (existingIndex >= 0) {
-      storedAssignments[existingIndex] = {
+      updatedAssignments[existingIndex] = {
         groupId,
         groupName: group.groupName,
         adviser,
         panels: selectedPanels,
       };
     } else {
-      storedAssignments.push({
+      updatedAssignments.push({
         groupId,
         groupName: group.groupName,
         adviser,
         panels: selectedPanels,
       });
     }
-    localStorage.setItem("adviserAssignments", JSON.stringify(storedAssignments));
+
+    setAssignments(updatedAssignments);
+    localStorage.setItem("adviserAssignments", JSON.stringify(updatedAssignments));
 
     // Update students
     const updatedStudents = students.map((s) => {
       if (group.members.includes(s.email)) {
         const notifs = s.notifications || [];
         notifs.push({
-          message: `✅ You have been assigned Adviser: ${adviser}. Panels: ${selectedPanels.join(", ")}`,
+          message: `✅ Adviser assigned: ${adviser}. Panels: ${selectedPanels.join(", ")}`,
           type: "success",
         });
         return { ...s, notifications: notifs, groupId: group.groupId };
       }
       return s;
     });
+    setStudents(updatedStudents);
     localStorage.setItem("approvedStudents", JSON.stringify(updatedStudents));
 
     // Update panels
@@ -120,18 +129,18 @@ export default function AdminAssignAdviser() {
       if (selectedPanels.includes(p.email)) {
         const notifs = p.notifications || [];
         notifs.push({
-          message: `✅ You are assigned to group "${group.groupName}" with Adviser: ${adviser}`,
+          message: `✅ You are assigned to group "${group.groupName}" (Adviser: ${adviser})`,
           type: "success",
         });
         return { ...p, groupId: group.groupId, notifications: notifs };
       }
       return p;
     });
+    setRegisteredPanels(updatedPanels);
     localStorage.setItem("panels", JSON.stringify(updatedPanels));
 
-    alert(`✅ Adviser & Panels assigned successfully for group "${group.groupName}"!`);
+    alert(`✅ Adviser & Panels assigned to "${group.groupName}"!`);
 
-    // Reset form
     setGroupId("");
     setAdviser("");
     setSelectedPanels([]);
@@ -154,6 +163,7 @@ export default function AdminAssignAdviser() {
           </p>
         </div>
 
+        {/* Form */}
         <div
           className="card shadow border-0 rounded-4 mx-auto"
           style={{ maxWidth: "650px", backgroundColor: "#ffffff" }}
@@ -225,6 +235,33 @@ export default function AdminAssignAdviser() {
             </form>
           </div>
         </div>
+
+        {/* Display Saved Assignments */}
+        {assignments.length > 0 && (
+          <div className="mt-5">
+            <h3 className="fw-bold text-light">📋 Adviser & Panel Assignments</h3>
+            <div className="table-responsive">
+              <table className="table table-bordered table-striped mt-3 bg-white text-dark">
+                <thead className="table-dark text-white">
+                  <tr>
+                    <th>Group Name</th>
+                    <th>Adviser</th>
+                    <th>Panels</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map((a) => (
+                    <tr key={a.groupId}>
+                      <td>{a.groupName}</td>
+                      <td>{a.adviser}</td>
+                      <td>{a.panels.join(", ") || "None"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-5 small text-light">
           &copy; {new Date().getFullYear()} Papertrail · Thesis Management System

@@ -20,8 +20,9 @@ export default function AdminContact() {
         <div className="col-md-6">
           <div className="card border-0 shadow-sm rounded-0 p-4">
             <h5 className="fw-semibold mb-3">Get in Touch</h5>
-            <p>Email: <a href="mailto:jaysatore@example.com">satorejay255@example.com</a></p>
-            <p>Phone: <a href="tel:+639123456789">+63 912 345 6789</a></p>
+            <p>Email: <a href="mailto:jaysatore@example.com">satorejay255@example.com, jade aninon
+              </a></p>
+            <p>Phone: <a href="tel:+639123456789">+0909090909090</a></p>
 
             <hr />
 

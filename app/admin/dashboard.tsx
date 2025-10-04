@@ -198,7 +198,7 @@ export default function AdminDashboard() {
                       <button className="btn btn-dark w-100 rounded-0 fw-semibold" onClick={() => router.push(card.link)}>
                         {card.btn}
                       </button>
-                    </div>
+                    </div>  
                   </div>
                 </div>
               ))}
