@@ -80,6 +80,13 @@ export default function Home() {
                 className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
                 onClick={() => router.push("/admin/login")}
               >
+                
+                📋 Dean
+              </button>
+              <button
+                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                onClick={() => router.push("/dean/login")}
+              >
                 ⚙️ Admin
               </button>
               <button
