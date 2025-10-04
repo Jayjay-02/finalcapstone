@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function DeanLogin() {
   const router = useRouter();
@@ -8,13 +8,28 @@ export default function DeanLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // ✅ Automatically create dean account if it doesn’t exist
+  useEffect(() => {
+    const storedData = localStorage.getItem("deanAccount");
+    if (!storedData) {
+      const defaultDean = {
+        email: "dean123",
+        password: "dean123",
+      };
+      localStorage.setItem("deanAccount", JSON.stringify(defaultDean));
+      console.log("✅ Default Dean account created (email: dean123, password: dean123)");
+    }
+  }, []);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const storedData = localStorage.getItem("deanAccount");
+
     if (!storedData) {
       setError("No account found. Please signup first.");
       return;
     }
+
     const dean = JSON.parse(storedData);
     if (dean.email === email && dean.password === password) {
       setError("");
@@ -72,7 +87,7 @@ export default function DeanLogin() {
             <form onSubmit={handleSubmit}>
               <div className="form-floating mb-3">
                 <input
-                  type="email"
+                  type="text"
                   className="form-control"
                   id="deanEmail"
                   placeholder="Enter your email"
@@ -111,7 +126,6 @@ export default function DeanLogin() {
                 Login
               </button>
 
-              {/* REGISTER / SIGNUP */}
               <div className="text-center">
                 <span className="me-1 text-muted">No account?</span>
                 <a

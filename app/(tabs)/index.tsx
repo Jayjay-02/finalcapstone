@@ -2,120 +2,138 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useRouter } from "expo-router";
 import React from "react";
 
+// ✅ Import your logo
+import logo from "../../assets/images/logo.jpg"; // adjust filename if needed
+
 export default function Home() {
   const router = useRouter();
+  
   return (
     <div
       className="container-fluid px-0"
       style={{
         minHeight: "100vh",
-        backgroundImage:
-          "url('/assets/images/c7d42c63-b68a-4e37-ba82-afe43fbae873.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
       }}
     >
-      <div
-        className="row justify-content-center align-items-center w-100"
-        style={{ minHeight: "100vh" }}
-      >
-        <div className="col-11 col-md-8 col-lg-6 col-xl-5 px-0">
-          <div className="bg-dark bg-opacity-75 rounded-4 shadow p-5 mb-4">
-            <div className="mb-3">
-              <span style={{ fontSize: 72 }} role="img" aria-label="books">
-                📚
-              </span>
+      <div className="row w-100 m-0" style={{ minHeight: "100vh" }}>
+        
+        {/* ================= Left Section ================= */}
+        <div
+          className="col-lg-7 col-md-12 d-flex align-items-center justify-content-center position-relative"
+          style={{ backgroundColor: "#d9d9d9" }}
+        >
+          <div className="text-center p-4 w-100">
+            
+            {/* 📚 Logo (replaced placeholder with image) */}
+            <div
+              style={{
+                width: "200px",
+                height: "200px",
+                backgroundColor: "#fff",
+                margin: "0 auto 30px auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid #ccc",
+              }}
+            >
+              <img 
+                src={logo} 
+                alt="PaperTrail Logo" 
+                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} 
+              />
             </div>
 
             {/* Main Title */}
-            <h1
-              className="fw-bolder mb-3"
-              style={{
-                fontSize: 64,
-                letterSpacing: -1,
-                lineHeight: 1.1,
-                textShadow: "3px 4px 8px rgba(0, 0, 0, 0.6)",
-                color: "#fff",
-              }}
-            >
-              PaperTrail
-            </h1>
-
             <h2
-              className="fw-semibold mb-3"
-              style={{
-                fontSize: 24,
-                lineHeight: 1.3,
-                textShadow: "2px 2px 6px rgba(0,0,0,0.5)",
-                color: "#ddd",
-              }}
+              className="fw-bold mb-4"
+              style={{ fontSize: "1.6rem", color: "#000" }}
             >
-              A Thesis Management System for Environmental Science Department
+              PaperTrail: A Thesis Management System for <br />
+              Environmental Science Department
             </h2>
 
-            <p
-              className="fw-normal mb-4 fs-6"
-              style={{
-                textShadow: "1px 1px 4px rgba(0,0,0,0.5)",
-                color: "#ccc",
-              }}
-            >
-              Track, manage &amp; collaborate on documents with ease!
-            </p>
-
-            {/* Unified Minimalist Buttons */}
-            <div className="d-flex flex-wrap justify-content-center gap-2 my-4">
+            {/* ================= Buttons Section ================= */}
+            <div className="d-flex justify-content-center gap-3 my-3 flex-wrap">
               <button
-                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                className="btn btn-dark btn-lg rounded-pill fw-semibold px-4"
                 onClick={() => router.push("/panel/login")}
               >
                 📋 Panel
               </button>
+
               <button
-                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                className="btn btn-dark btn-lg rounded-pill fw-semibold px-4"
                 onClick={() => router.push("/admin/login")}
               >
-                
                 📋 Dean
               </button>
+
               <button
-                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                className="btn btn-dark btn-lg rounded-pill fw-semibold px-4"
                 onClick={() => router.push("/dean/login")}
               >
                 ⚙️ Admin
               </button>
+
               <button
-                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                className="btn btn-dark btn-lg rounded-pill fw-semibold px-4"
                 onClick={() => router.push("/student/login")}
               >
                 🎓 Student
               </button>
+
               <button
-                className="btn btn-dark btn-lg rounded-pill fw-semibold shadow-sm px-4"
+                className="btn btn-dark btn-lg rounded-pill fw-semibold px-4"
                 onClick={() => router.push("/instructor/login")}
               >
                 👨‍🏫 Adviser
               </button>
             </div>
 
-            {/* Footer */}
+            {/* ================= Footer ================= */}
             <div
               className="pt-2 small"
               style={{
-                textShadow: "1px 1px 4px rgba(0,0,0,0.6)",
-                color: "#bbb",
+                color: "#333",
               }}
             >
               <span className="fw-bold">Papertrail</span> &copy;{" "}
               {new Date().getFullYear()} · Documentation made easy.
             </div>
           </div>
+
+          {/* Black angled divider (like screenshot) */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: "-60px",
+              width: "30px",
+              height: "100%",
+              backgroundColor: "black",
+              transform: "skewX(-20deg)",
+            }}
+          />
         </div>
+
+        {/* ================= Right Section ================= */}
+        <div className="col-lg-5 col-md-12 d-flex align-items-center justify-content-center">
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: "500",
+              color: "#000",
+            }}
+          >
+            Image/Logo
+          </div>
+        </div>
+
       </div>
     </div>
   );
